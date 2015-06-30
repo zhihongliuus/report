@@ -40,6 +40,7 @@ plugins = ["plugin_load_case_name",
            "plugin_load_carrier_name_log"]
 
 def walk_suites(report_dir, f):
+    os.chdir(report_dir)
     suite_names = (os.path.join(report_dir, fn) for fn in os.listdir(report_dir))
     suite_names = ((os.stat(path), path) for path in suite_names)
     suite_names = ((stat[ST_CTIME], path) for stat, path in suite_names if S_ISDIR(stat[ST_MODE]))
@@ -55,7 +56,7 @@ def walk_suites(report_dir, f):
 def walk_suite(suite_name, f):
     plugins = load_plugins()
     output = "<tbody><tr>"
-    for testcase in os.listdir(suite_name):
+    for testcase in sorted(os.listdir(suite_name)):
         for plugin in plugins:
             globals()[plugin](os.path.join(suite_name, testcase), f)
     output += "</tr></tbody>\n"
@@ -67,7 +68,10 @@ def load_plugins():
 
 def plugin_load_case_name(testcase, f):
     """CaseName"""
-    pass
+    output = "<td>\n"
+    output += "_".join(os.path.split(os.path.relpath(testcase))[-2:])
+    output += "</td>\n"
+    f.write(output)
 
 def plugin_load_case_description(testcase, f):
     """Description"""
