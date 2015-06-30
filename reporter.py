@@ -29,7 +29,10 @@ FOOT = """</table>
 </html>
 """
 
-plugins = ["plugin_load_trace_log",
+plugins = ["plugin_load_case_name",
+#           "plugin_load_case_description",
+           "plugin_load_case_result",
+           "plugin_load_trace_log",
            "plugin_load_logcat_log",
            "plugin_load_screen_shot",
            "plugin_load_calling_log",
@@ -61,6 +64,18 @@ def walk_suite(suite_name, f):
 def load_plugins():
 #    return [plugin for plugin in globals().keys() if plugin.startswith("plugin_")]
     return plugins
+
+def plugin_load_case_name(testcase, f):
+    """CaseName"""
+    pass
+
+def plugin_load_case_description(testcase, f):
+    """Description"""
+    pass
+
+def plugin_load_case_result(tescase, f):
+    """Result"""
+    pass
 
 def plugin_load_trace_log(testcase, f):
     """TraceLog"""
