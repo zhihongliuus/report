@@ -8,17 +8,67 @@ HEAD = """
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-table {
-  border-collapse: collapse;
-}
+    <style>
 
-td, th {
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left;
-}
-</style>
+        body {
+            font:normal 68% verdana,arial,helvetica;
+            color:#000000;
+        }
+        table tr td, table tr th {
+            font-size: 68%;
+        }
+        table.details tr th{
+            font-weight: bold;
+            text-align:left;
+            background:#a6caf0;
+        }
+        table.details tr td{
+            background:#eeeee0;
+        }
+
+        p {
+            line-height:1.5em;
+            margin-top:0.5em; margin-bottom:1.0em;
+        }
+        h1 {
+            margin: 0px 0px 5px; font: 165% verdana,arial,helvetica
+        }
+        h2 {
+            margin-top: 1em; margin-bottom: 0.5em; font: bold 125% verdana,arial,helvetica
+        }
+        h3 {
+            margin-bottom: 0.5em; font: bold 115% verdana,arial,helvetica
+        }
+        h4 {
+            margin-bottom: 0.5em; font: bold 100% verdana,arial,helvetica
+        }
+        h5 {
+            margin-bottom: 0.5em; font: bold 100% verdana,arial,helvetica
+        }
+        h6 {
+            margin-bottom: 0.5em; font: bold 100% verdana,arial,helvetica
+        }
+        .Error {
+            font-weight:bold; color:red;
+        }
+        .Failure {
+            font-weight:bold; color:purple;
+        }
+        .NotRun {
+            font-weight:bold; color:gray;
+        }
+        .Pass {
+              color:black;
+        }
+        .Properties {
+          text-align:right;
+        }
+
+        img {
+            width:200px;
+        }
+
+    </style>
 </head>
 <body>
 <table>
@@ -30,7 +80,7 @@ FOOT = """</table>
 """
 
 plugins = ["plugin_load_case_name",
-#           "plugin_load_case_description",
+           #           "plugin_load_case_description",
            "plugin_load_case_result",
            "plugin_load_trace_log",
            "plugin_load_logcat_log",
@@ -39,32 +89,42 @@ plugins = ["plugin_load_case_name",
            "plugin_load_error_summary_log",
            "plugin_load_carrier_name_log"]
 
+
+def sort_files(files):
+    files = ((os.stat(path), path) for path in files)
+    files = ((stat[ST_CTIME], path) for stat, path in files)
+    return [file for c_data, file in sorted(files)]
+
+
 def walk_suites(report_dir, f):
     os.chdir(report_dir)
-    suite_names = (os.path.join(report_dir, fn) for fn in os.listdir(report_dir))
-    suite_names = ((os.stat(path), path) for path in suite_names)
-    suite_names = ((stat[ST_CTIME], path) for stat, path in suite_names if S_ISDIR(stat[ST_MODE]))
+    suite_names = (fn for fn in os.listdir(report_dir) if os.path.isdir(fn))
     output = "<thead><tr>"
     plugins = load_plugins()
     for plugin in plugins:
-        output += "<th class=\"{class_name}\">{plugin_name}</th>".format(class_name=globals()[plugin].__doc__, plugin_name=globals()[plugin].__doc__)
+        output += "<th class=\"{class_name}\">{plugin_name}</th>".format(class_name=globals()[plugin].__doc__,
+                                                                         plugin_name=globals()[plugin].__doc__)
     output += "</tr></thead>\n"
     f.write(output)
-    for c_date, suite_name in sorted(suite_names):
+    for suite_name in sort_files(suite_names):
         walk_suite(suite_name, f)
+
 
 def walk_suite(suite_name, f):
     plugins = load_plugins()
-    output = "<tbody><tr>"
+    f.write("<tbody>")
     for testcase in sorted(os.listdir(suite_name)):
+        f.write("<tr>")
         for plugin in plugins:
             globals()[plugin](os.path.join(suite_name, testcase), f)
-    output += "</tr></tbody>\n"
-    f.write(output)
+        f.write("</tr>")
+    f.write("</tbody>\n")
+
 
 def load_plugins():
-#    return [plugin for plugin in globals().keys() if plugin.startswith("plugin_")]
+    #    return [plugin for plugin in globals().keys() if plugin.startswith("plugin_")]
     return plugins
+
 
 def plugin_load_case_name(testcase, f):
     """CaseName"""
@@ -73,13 +133,23 @@ def plugin_load_case_name(testcase, f):
     output += "</td>\n"
     f.write(output)
 
+
 def plugin_load_case_description(testcase, f):
     """Description"""
-    pass
+    f.write("<td></td>")
 
-def plugin_load_case_result(tescase, f):
+
+def plugin_load_case_result(testcase, f):
     """Result"""
-    pass
+    output = "<td class={0}>\n".format("TraceLog")
+    for root, dir, files in os.walk(testcase):
+        for name in files:
+            if name == "report.xml":
+                output += "<a href=\"{0}\">{1}</a>\n".format(os.path.join(root, name), name)
+                break
+    output += "</td>\n"
+    f.write(output)
+
 
 def plugin_load_trace_log(testcase, f):
     """TraceLog"""
@@ -87,9 +157,10 @@ def plugin_load_trace_log(testcase, f):
     for root, dir, files in os.walk(testcase):
         for name in files:
             if name.startswith("trace_log"):
-                output += "<a href=\"{0}\">{1}</a>".format(urlparse.urljoin(root, name), name)
+                output += "<a href=\"{0}\">{1}</a>\n".format(os.path.join(root, name), name)
     output += "</td>\n"
     f.write(output)
+
 
 def plugin_load_logcat_log(testcase, f):
     """Logcat"""
@@ -97,19 +168,26 @@ def plugin_load_logcat_log(testcase, f):
     for root, dir, files in os.walk(testcase):
         for name in files:
             if name.startswith("logcat"):
-                output += "<a href=\"{0}\">{1}</a>".format(urlparse.urljoin(root, name), name)
+                output += "<a href=\"{0}\">{1}</a>\n".format(os.path.join(root, name), name)
     output += "</td>\n"
     f.write(output)
 
-def plugin_load_screen_shot(testcase,f):
+
+def plugin_load_screen_shot(testcase, f):
     """Screenshot"""
     output = "<td>\n"
+    screenshots = []
     for root, dir, files in os.walk(testcase):
         for name in files:
             if name.endswith("png"):
-                output += "<a href=\"{0}\">{1}</a>".format(urlparse.urljoin(root, name), name)
+                screenshots.append(os.path.join(root, name))
+    for screenshot in sort_files(screenshots):
+        output += "<a href=\"{src}\"><img src=\"{src}\" alt=\"{basename}\"></a>\n".format(src=screenshot,
+                                                                                          basename=os.path.basename(
+                                                                                              screenshot))
     output += "</td>\n"
     f.write(output)
+
 
 def plugin_load_calling_log(testcase, f):
     """CallingLog"""
@@ -121,7 +199,8 @@ def plugin_load_calling_log(testcase, f):
     output += "</td>\n"
     f.write(output)
 
-def plugin_load_error_summary_log(testcase,f):
+
+def plugin_load_error_summary_log(testcase, f):
     """ErrorSummary"""
     output = "<td>\n"
     for root, dir, files in os.walk(testcase):
@@ -130,6 +209,7 @@ def plugin_load_error_summary_log(testcase,f):
                 pass
     output += "</td>\n"
     f.write(output)
+
 
 def plugin_load_carrier_name_log(testcase, f):
     """CarrierNmae"""
@@ -142,15 +222,13 @@ def plugin_load_carrier_name_log(testcase, f):
     f.write(output)
 
 
-
-
 if __name__ == "__main__":
-
-
     reporter_file_name = "enhanced_report.html"
 
     with open(reporter_file_name, 'w') as f:
         f.write(HEAD)
-        walk_suites("/home/guest/Automation/repo_main_L/tests/common-baseline/UI-automation/automation-scripts/result-062515-20-43-36", f)
+        walk_suites(
+            "/home/guest/Automation/repo_main_L/tests/common-baseline/UI-automation/automation-scripts/result-062515-20-43-36",
+            f)
         f.write(FOOT)
         f.close()
