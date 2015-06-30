@@ -74,7 +74,7 @@ def plugin_load_trace_log(testcase, f):
 
 def plugin_load_logcat_log(testcase, f):
     """Logcat"""
-    output = "<td>\n"
+    output = "<td class={0}>\n".format("Logcat")
     for root, dir, files in os.walk(testcase):
         for name in files:
             if name.startswith("logcat"):
