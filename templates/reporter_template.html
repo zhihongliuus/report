@@ -43,8 +43,8 @@
                 </tr>
               </thead>
               <tbody>
-              {% for testcase in testcases %}
-                {% for result in testcase.results %}
+              {% for testcase_name, testcase_status in testcases.iteritems() %}
+                {% testcase_path, desc,  testcase_status %}
                 <tr>
                   <td>{{ result }}</td>
                 </tr>

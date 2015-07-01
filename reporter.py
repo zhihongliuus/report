@@ -3,6 +3,7 @@ __author__ = 'frank'
 from stat import S_ISDIR, ST_CTIME, ST_MODE
 import os
 import re
+from collections import OrderedDict
 
 from jinja2 import Template
 
@@ -11,6 +12,13 @@ REPORT_HEADS = ["Testcase",
                 "Result",
                 "Screenshots"]
 
+def find_val_from_file(file, pattern):
+    results = []
+    with open(file) as f:
+        for line in f.readlines():
+            if re.search(pattern, line):
+                results.append(re.search(pattern, line))
+    return results
 
 
 def sort_files(files):
@@ -28,12 +36,31 @@ def search_files(root_dir, pattern):
     return results
 
 def get_testcases(test_report_dir):
-    testcases = []
+    testcases = OrderedDict()
     suite_names = (fn for fn in os.listdir(test_report_dir) if os.path.isdir(fn))
     for suite_name in sort_files(suite_names):
-        for testcase in sorted(os.listdir(suite_name)):
-            testcases.append(("_".join(os.path.split(testcase), testcase)))
+        for testcase_path in sorted(os.listdir(suite_name)):
+            testcase_status = get_case_status(testcase_path)
+            testcases["_".join(os.path.split(testcase_path))] = testcase_status
     return testcases
+
+def get_case_status(testcase_path):
+    desc = ""
+    result = ""
+    if search_files(testcase_path, "report.xml"):
+        report_file = search_files(testcase_path, "report.xml")[0]
+    if report_file:
+        match = find_val_from_file(report_file, "description=\"(.*)\"")
+        if match:
+            desc = match.group(1)
+        match = find_val_from_file(report_file, "result=\"(.*)\"")
+        if match:
+            result = match.group(1)
+    return testcase_path, desc, result
+
+REPORT_DIR = ""
+
+
 
 
 
