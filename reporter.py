@@ -80,7 +80,7 @@ FOOT = """</table>
 """
 
 plugins = ["plugin_load_case_name",
-           #           "plugin_load_case_description",
+           "plugin_load_case_description",
            "plugin_load_case_result",
            "plugin_load_trace_log",
            "plugin_load_logcat_log",
