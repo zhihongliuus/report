@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = 'frank'
 
 from stat import S_ISDIR, ST_CTIME, ST_MODE
@@ -5,7 +6,7 @@ import os
 import re
 from collections import OrderedDict
 
-from jinja2 import Template
+from jinja2 import Environment, PackageLoader
 
 REPORT_HEADS = ["Testcase",
                 "Description",
@@ -60,7 +61,7 @@ def get_case_status(testcase_path):
 
 REPORT_DIR = ""
 
-
+env = Environment(loader=PackageLoader('reporter', 'templates'))
 
 
 
