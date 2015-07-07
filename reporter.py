@@ -74,7 +74,7 @@ def main():
     params = {}
     testcases = get_testcases(REPORT_DIR)
 
-    env = Environment(loader=FileSystemLoader(THIS_DIR), trim_blocks=True)
+    env = Environment(loader=FileSystemLoader(os.path.join(THIS_DIR, 'templates')), trim_blocks=True)
     template = env.get_template('reporter_template.html')
     template.render()
 
