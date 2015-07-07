@@ -76,7 +76,7 @@ def main():
 
     env = Environment(loader=FileSystemLoader(os.path.join(THIS_DIR, 'templates')), trim_blocks=True)
     template = env.get_template('reporter_template.html')
-    template.render(testcases=testcases)
+    print template.render(testcases=testcases)
 
 if __name__ == '__main__':
     main()
