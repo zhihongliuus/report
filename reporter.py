@@ -4,14 +4,21 @@ __author__ = 'frank'
 from stat import S_ISDIR, ST_CTIME, ST_MODE
 import os
 import re
+import argparse
 from collections import OrderedDict
 
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, FileSystemLoader
 
 REPORT_HEADS = ["Testcase",
                 "Description",
                 "Result",
                 "Screenshots"]
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument('--results', '-r')
+    return p.parse_args()
+
 
 def find_val_from_file(file, pattern):
     results = []
@@ -61,11 +68,18 @@ def get_case_status(testcase_path):
 
 REPORT_DIR = ""
 
-env = Environment(loader=PackageLoader('reporter', 'templates'))
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def main():
+    params = {}
+    testcases = get_testcases(REPORT_DIR)
 
+    env = Environment(loader=FileSystemLoader(THIS_DIR), trim_blocks=True)
+    template = env.get_template('reporter_template.html')
+    template.render()
 
-
+if __name__ == '__main__':
+    main()
 
 
 # plugins = ["plugin_load_case_name",
