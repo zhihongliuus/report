@@ -66,7 +66,7 @@ def get_case_status(testcase_path):
             result = match.group(1)
     return testcase_path, desc, result
 
-REPORT_DIR = ""
+REPORT_DIR = "/home/guest/Automation/repo-mian-L/tests/common-baseline/UI-automation/automation-scripts/result-070615-19-12-58/"
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
