@@ -44,9 +44,9 @@
               </thead>
               <tbody>
               {% for testcase_name, testcase_status in testcases.iteritems() %}
-                {% testcase_path, desc,  testcase_status %}
+                {% testcase_path, desc, result = testcases[testcase_name] %}
                 <tr>
-                  <td>{{ result }}</td>
+                  <td>{{ testcase_name, testcase_path, desc, result }}</td>
                 </tr>
                 {%%}
               {% endfor %}
