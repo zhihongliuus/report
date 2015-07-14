@@ -4,20 +4,54 @@ __author__ = 'frank'
 from stat import S_ISDIR, ST_CTIME, ST_MODE
 import os
 import re
-import argparse
 from collections import OrderedDict
 
-from jinja2 import Environment, FileSystemLoader
+from flask import Flask
+from flask import render_template
 
-REPORT_HEADS = ["Testcase",
-                "Description",
-                "Result",
-                "Screenshots"]
+import yaml
 
-def parse_args():
-    p = argparse.ArgumentParser()
-    p.add_argument('--results', '-r')
-    return p.parse_args()
+app = Flask(__name__)
+app.debug = True
+
+config = yaml.load(file("config.yaml", 'r'))
+
+class TestSuite:
+    def __init__(self, suite_path):
+        self.suite_path = suite_path
+
+    def get_suite_name(self):
+        self.suite_name = "_".join(os.path.split(self.suite_path))
+
+    def get_testcases(self):
+        self.testcases = []
+        for case_dir in sort_files(self.suite_path):
+            tc = TestCase(case_dir)
+            tc.build_case()
+            self.testcases.append(tc)
+
+    def build_suite(self):
+        self.get_suite_name()
+        self.get_test_cases()
+
+
+class TestCase:
+    def __init__(self, case_dir):
+        self.case_dir = case_dir
+        self.case_name = "_".join(os.path.split(self.suite_path))
+
+    def build_case(self):
+        if search_files(self.case_dir, "report.xml"):
+            report_file = search_files(self.case_dir, "report.xml")[0]
+        if report_file:
+            match = find_val_from_file(report_file, "description=\"(.*)\"")
+            if match:
+                self.desc = match.group(1)
+            match = find_val_from_file(report_file, "result=\"(.*)\"")
+            if match:
+                self.result = match.group(1)
+
+
 
 
 def find_val_from_file(file, pattern):
@@ -43,6 +77,7 @@ def search_files(root_dir, pattern):
                 results.append(os.path.join(root, name))
     return results
 
+
 def get_testcases(test_report_dir):
     testcases = OrderedDict()
     suite_names = (fn for fn in os.listdir(test_report_dir) if os.path.isdir(fn))
@@ -51,6 +86,7 @@ def get_testcases(test_report_dir):
             testcase_status = get_case_status(testcase_path)
             testcases["_".join(os.path.split(testcase_path))] = testcase_status
     return testcases
+
 
 def get_case_status(testcase_path):
     desc = ""
@@ -66,156 +102,35 @@ def get_case_status(testcase_path):
             result = match.group(1)
     return testcase_path, desc, result
 
-REPORT_DIR = "/home/guest/Automation/repo-mian-L/tests/common-baseline/UI-automation/automation-scripts/result-070615-19-12-58/"
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+@app.route('/')
+def index():
+    config[]
 
-def main():
-    params = {}
-    testcases = get_testcases(REPORT_DIR)
 
-    env = Environment(loader=FileSystemLoader(os.path.join(THIS_DIR, 'templates')), trim_blocks=True)
-    template = env.get_template('reporter_template.html')
-    print template.render(testcases=testcases).encode('utf-8')
+@app.route('/suites/')
+def suites():
+    return "Suites"
+
+
+@app.route('/suites/cases')
+def cases():
+    return "Cases"
+
+
+@app.route('/compare')
+def compare():
+    return "Compare"
+
+
+@app.route("/test")
+def test():
+    return "test"
 
 if __name__ == '__main__':
-    main()
+    env = Environment(loader=FileSystemLoader(os.path.join('templates')), trim_blocks=True)
+    template = env.get_template('reporter_template.html')
+    print template.render(testcases=testcases).encode('utf-8')
+    app.run(host='0.0.0.0')
 
-
-# plugins = ["plugin_load_case_name",
-#            "plugin_load_case_description",
-#            "plugin_load_case_result",
-#            "plugin_load_trace_log",
-#            "plugin_load_logcat_log",
-#            "plugin_load_screen_shot",
-#            "plugin_load_calling_log",
-#            "plugin_load_error_summary_log",
-#            "plugin_load_carrier_name_log"]
-
-#
-# def walk_suites(report_dir, f):
-#     os.chdir(report_dir)
-#     suite_names = (fn for fn in os.listdir(report_dir) if os.path.isdir(fn))
-#     output = "<thead><tr>"
-#     plugins = load_plugins()
-#     for plugin in plugins:
-#         output += "<th class=\"{class_name}\">{plugin_name}</th>".format(class_name=globals()[plugin].__doc__,
-#                                                                          plugin_name=globals()[plugin].__doc__)
-#     output += "</tr></thead>\n"
-#     f.write(output)
-#     for suite_name in sort_files(suite_names):
-#         walk_suite(suite_name, f)
-#
-#
-# def walk_suite(suite_name, f):
-#     plugins = load_plugins()
-#     f.write("<tbody>")
-#     for testcase in sorted(os.listdir(suite_name)):
-#         f.write("<tr>")
-#         for plugin in plugins:
-#             globals()[plugin](os.path.join(suite_name, testcase), f)
-#         f.write("</tr>")
-#     f.write("</tbody>\n")
-#
-#
-# def load_plugins():
-#     #    return [plugin for plugin in globals().keys() if plugin.startswith("plugin_")]
-#     return plugins
-#
-#
-# def plugin_load_case_name(testcase, f):
-#     """CaseName"""
-#     output = "<td>\n"
-#     output += "_".join(os.path.split(os.path.relpath(testcase))[-2:])
-#     output += "</td>\n"
-#     f.write(output)
-#
-#
-# def plugin_load_case_description(testcase, f):
-#     """Description"""
-#     f.write("<td></td>")
-#
-#
-# def plugin_load_case_result(testcase, f):
-#     """Result"""
-#     output = "<td class={0}>\n".format("TraceLog")
-#     for root, dir, files in os.walk(testcase):
-#         for name in files:
-#             if name == "report.xml":
-#                 output += "<a href=\"{0}\">{1}</a>\n".format(os.path.join(root, name), name)
-#                 break
-#     output += "</td>\n"
-#     f.write(output)
-#
-#
-# def plugin_load_trace_log(testcase, f):
-#     """TraceLog"""
-#     output = "<td class={0}>\n".format("TraceLog")
-#     for root, dir, files in os.walk(testcase):
-#         for name in files:
-#             if name.startswith("trace_log"):
-#                 output += "<a href=\"{0}\">{1}</a>\n".format(os.path.join(root, name), name)
-#     output += "</td>\n"
-#     f.write(output)
-#
-#
-# def plugin_load_logcat_log(testcase, f):
-#     """Logcat"""
-#     output = "<td class={0}>\n".format("Logcat")
-#     for root, dir, files in os.walk(testcase):
-#         for name in files:
-#             if name.startswith("logcat"):
-#                 output += "<a href=\"{0}\">{1}</a>\n".format(os.path.join(root, name), name)
-#     output += "</td>\n"
-#     f.write(output)
-#
-#
-# def plugin_load_screen_shot(testcase, f):
-#     """Screenshot"""
-#     output = "<td>\n"
-#     screenshots = []
-#     for root, dir, files in os.walk(testcase):
-#         for name in files:
-#             if name.endswith("png"):
-#                 screenshots.append(os.path.join(root, name))
-#     for screenshot in sort_files(screenshots):
-#         output += "<a href=\"{src}\"><img src=\"{src}\" alt=\"{basename}\"></a>\n".format(src=screenshot,
-#                                                                                           basename=os.path.basename(
-#                                                                                               screenshot))
-#     output += "</td>\n"
-#     f.write(output)
-#
-#
-# def plugin_load_calling_log(testcase, f):
-#     """CallingLog"""
-#     output = "<td>\n"
-#     for root, dir, files in os.walk(testcase):
-#         for name in files:
-#             if name.endswith("png"):
-#                 pass
-#     output += "</td>\n"
-#     f.write(output)
-#
-#
-# def plugin_load_error_summary_log(testcase, f):
-#     """ErrorSummary"""
-#     output = "<td>\n"
-#     for root, dir, files in os.walk(testcase):
-#         for name in files:
-#             if name.endswith("png"):
-#                 pass
-#     output += "</td>\n"
-#     f.write(output)
-#
-#
-# def plugin_load_carrier_name_log(testcase, f):
-#     """CarrierNmae"""
-#     output = "<td>\n"
-#     for root, dir, files in os.walk(testcase):
-#         for name in files:
-#             if name.endswith("png"):
-#                 pass
-#     output += "</td>\n"
-#     f.write(output)
-#
 
