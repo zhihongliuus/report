@@ -116,7 +116,7 @@ def index():
         ts = TestSuite(suite_dir)
         ts.build_suite()
         testsuites.append()
-    return render_template("report_template.html", testsuites=testsuites)
+    return render_template("templates/reporter_template.html", testsuites=testsuites)
 
 
 
