@@ -1,5 +1,5 @@
 results_root_dir :
-  repo_dir        : ~/Automation/repo-mian-L
+  repo_dir        : /home/guest/Automation/repo-mian-L
   auto_script_dir : tests/common-baseline/UI-automation/automation-scripts
 
 results_folder_pattern : result-(\d*)-(\d*)-(\d*)-(\d*)
