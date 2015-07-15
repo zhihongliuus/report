@@ -120,9 +120,16 @@ def index():
 
 
 
-@app.route('/suites/')
-def suites():
-    return "Suites"
+@app.route('/suites/<suites>')
+def suites(suites):
+    report_dir = os.path.join(config["results_root_dir"]["repo_dir"], config["results_root_dir"]["auto_script_dir"], suites)
+    suite_dirs = (os.path.join(report_dir, fn) for fn in os.listdir(report_dir) if os.path.isdir(fn))
+    testsuites = []
+    for suite_dir in sort_files(suite_dirs):
+        ts = TestSuite(suite_dir)
+        ts.build_suite()
+        testsuites.append()
+    return render_template("reporter_template.html", testsuites=testsuites)
 
 
 @app.route('/suites/cases')
