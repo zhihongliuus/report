@@ -19,9 +19,11 @@ config = yaml.load(file("config.yaml", 'r'))
 class TestSuite:
     def __init__(self, suite_path):
         self.suite_path = suite_path
+        self.suite_basename = os.path.basename(suite_path)
+        self.suite_dirname = os.path.dirname(suite_path)
 
     def get_suite_name(self):
-        self.suite_name = "_".join(os.path.split(self.suite_path))
+        self.suite_name = self.suite_basename
 
     def get_testcases(self):
         self.testcases = []
@@ -38,7 +40,9 @@ class TestSuite:
 class TestCase:
     def __init__(self, case_dir):
         self.case_dir = case_dir
-        self.case_name = "_".join(os.path.split(self.suite_path))
+        self.case_dirname = os.path.dirname(case_dir)
+        self.case_basename = os.path.basename(case_dir)
+        self.case_name = "_".join(os.path.basename(self.case_dirname), self.case_basename)
 
     def build_case(self):
         if search_files(self.case_dir, "report.xml"):
@@ -105,7 +109,15 @@ def get_case_status(testcase_path):
 
 @app.route('/')
 def index():
-    config[]
+    report_dir = os.path.join(config["results_root_dir"]["repo_dir"], config["results_root_dir"]["auto_script_dir"])
+    suite_dirs = (os.path.join(report_dir, fn) for fn in os.listdir(report_dir) if os.path.isdir(fn))
+    testsuites = []
+    for suite_dir in sort_files(suite_dirs):
+        ts = TestSuite(suite_dir)
+        ts.build_suite()
+        testsuites.append()
+    return render_template("report_template.html", testsuites=testsuites)
+
 
 
 @app.route('/suites/')
@@ -128,9 +140,6 @@ def test():
     return "test"
 
 if __name__ == '__main__':
-    env = Environment(loader=FileSystemLoader(os.path.join('templates')), trim_blocks=True)
-    template = env.get_template('reporter_template.html')
-    print template.render(testcases=testcases).encode('utf-8')
     app.run(host='0.0.0.0')
 
 
